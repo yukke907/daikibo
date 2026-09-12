@@ -637,6 +637,35 @@ body.led-multimode .led-thumb-item{cursor:pointer}
   #led-thumb-area{display:none !important}
   @page{size:A4 portrait;margin:0;marks:none}
 }
+/* ===== 項目・工程のテンプレ編集 ===== */
+.ie-overlay{position:fixed;inset:0;background:#eef2f7;z-index:9100;display:none;flex-direction:column}
+.ie-overlay.on{display:flex}
+.ie-top{background:#081634;color:#fff;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.ie-title{font-size:14px;font-weight:800;flex:1;min-width:0}
+.ie-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:18px;flex-shrink:0}
+.ie-tpl{display:flex;gap:8px;padding:8px 12px;background:#0C204A;flex-shrink:0}
+.ie-tpl button{flex:1;background:#F4A33A;border:none;color:#0A1A38;height:38px;border-radius:9px;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer}
+.ie-tpl button:last-child{background:rgba(255,255,255,.16);color:#fff}
+.ie-procbar{display:flex;gap:5px;overflow-x:auto;padding:8px 12px;background:#0C204A;border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;scrollbar-width:none}
+.ie-procbar::-webkit-scrollbar{display:none}
+.ie-procbar button{flex-shrink:0;min-width:34px;height:34px;border-radius:8px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:rgba(255,255,255,.85);font-size:13px;font-weight:800;font-family:inherit;padding:0 8px;white-space:nowrap;cursor:pointer}
+.ie-procbar button.on{background:#F4A33A;border-color:#fff;color:#0A1A38}
+.ie-procbar .ie-addproc{background:rgba(255,255,255,.16);color:#fff;font-size:11px}
+.ie-body{flex:1;overflow-y:auto;padding:12px}
+.ie-proc-head{display:flex;gap:8px;margin-bottom:12px}
+.ie-proc-title{flex:1;min-width:0;border:1px solid #cbd5e6;border-radius:8px;padding:10px;font-size:14px;font-weight:700;font-family:inherit}
+.ie-delproc{background:#fff;border:1px solid #e0a5a5;color:#c44;border-radius:8px;padding:0 10px;font-size:11px;font-weight:800;font-family:inherit;flex-shrink:0;cursor:pointer}
+.ie-row{display:flex;gap:6px;align-items:center;margin-bottom:7px;position:relative}
+.ie-item-input{flex:1;min-width:0;border:1px solid #dde4ee;border-radius:8px;padding:10px;font-size:13px;font-family:inherit}
+@keyframes ie-flash-anim{0%{background:#fff0d6}70%{background:#fff0d6}100%{background:#fff}}
+.ie-row.ie-flash .ie-item-input{border-color:#F4A33A;animation:ie-flash-anim 1.8s ease-out}
+.ie-row.ie-flash .ie-mv,.ie-row.ie-flash .ie-del{border-color:#F4A33A}
+.ie-chip{position:absolute;top:-9px;left:10px;background:#F4A33A;color:#0A1A38;font-size:10px;font-weight:800;padding:1px 8px;border-radius:9px;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.25);z-index:3;white-space:nowrap}
+.ie-proc-title.ie-flash{border-color:#F4A33A!important;animation:ie-flash-anim 1.8s ease-out}
+.ie-mv{width:34px;height:40px;border:1px solid #dde4ee;background:#fff;border-radius:8px;font-size:11px;flex-shrink:0;cursor:pointer}
+.ie-del{width:40px;height:40px;border:1px solid #f0c0c0;background:#fff;border-radius:8px;font-size:15px;flex-shrink:0;cursor:pointer}
+.ie-additem{width:100%;height:46px;border:1.5px dashed #9fb0c8;background:#fff;color:#0C204A;border-radius:10px;font-size:13px;font-weight:800;font-family:inherit;margin-top:8px;margin-bottom:20px;cursor:pointer}
+.ie-hint{font-size:11px;color:#66748a;background:#e2e9f2;border-radius:8px;padding:8px 10px;margin-bottom:12px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -1060,13 +1089,20 @@ body.led-multimode .led-thumb-item{cursor:pointer}
     <div class="st-note">⚠️ <b>Safari/Chromeで開く</b>（LINE・Claudeアプリ内では動きません）。機種変更前は必ず<b>📤データ送信</b>でバックアップを。</div>
 
     <div class="settings-section-title">🎓 使い方ガイド</div>
+    <button onclick="closeSettings();openItemEdit()" style="width:100%;height:44px;background:#0A1A38;border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:12px">📋 この工事の項目を編集・テンプレ適用</button>
     <button onclick="closeSettings();setTimeout(startTutorial,250)" style="width:100%;height:40px;border:1px solid #1D9E75;background:#E1F5EE;color:#0d6b4c;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;margin-bottom:12px;font-family:inherit">▶️ チュートリアルをもう一度見る</button>
 
     <button class="settings-close" onclick="closeSettings()">閉じる</button>
   </div>
 </div>
+<div id="item-edit-overlay" class="ie-overlay">
+  <div class="ie-top"><span class="ie-title">📋 項目の編集（この工事のみ）</span><button class="ie-close" onclick="closeItemEdit()">✕</button></div>
+  <div class="ie-tpl"><button onclick="ieApplyTemplateMenu()">📥 テンプレ適用</button><button onclick="ieSaveTemplate()">💾 テンプレ保存</button></div>
+  <div class="ie-procbar" id="ie-procbar"></div>
+  <div class="ie-body" id="ie-body"></div>
+</div>
 <script>
-const PROCESSES=[
+var DEFAULT_PROCESSES=[
   {no:"工程①",title:"足場仮設工事",shortName:"足場仮設",category:"",badge:"badge-p1",
    sub:"外部足場・架設足場の設置・解体",
    mpLabel:"工区",
@@ -1256,6 +1292,34 @@ const PROCESSES=[
    custom:true,
    footer:"注意｜「＋工事を追加」で工事名を入力。各工事は施工前・施工中・施工後を基本に、必要な工程を追加して撮影。"}
 ];
+// 工事ごとに編集可能な工程セット（未カスタムは共有の DEFAULT_PROCESSES を参照）
+var PROCESSES=DEFAULT_PROCESSES;
+function _clone(o){return JSON.parse(JSON.stringify(o));}
+function _circled(n){var c=['','①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];return c[n]||('('+n+')');}
+function procKeyFor(pid){return 'dk_procset_'+pid;}
+function normalizeProcesses(arr){
+  return arr.map(function(p,idx){
+    p.no=p.no||('工程'+_circled(idx+1));
+    p.title=p.title||'';p.shortName=p.shortName||p.title||'';p.category=p.category||'';p.badge=p.badge||'badge-p1';
+    p.sub=p.sub||'';p.mpLabel=p.mpLabel||'工区';p.items=p.items||[];
+    if(!p.steps||!p.steps.length)p.steps=['施工前','施工中','施工完了'];
+    if(!p.stars||p.stars.length!==p.items.length)p.stars=p.items.map(function(_,i){return (p.stars&&p.stars[i])||false;});
+    if(!p.itemSteps||p.itemSteps.length!==p.items.length){
+      p.itemSteps=p.items.map(function(_,i){return (p.itemSteps&&p.itemSteps[i])?p.itemSteps[i]:p.steps.slice();});
+    }
+    p.footer=p.footer||'';
+    return p;
+  });
+}
+function loadProcesses(){
+  try{
+    var raw=localStorage.getItem(procKeyFor(currentProjectId));
+    if(raw){var arr=JSON.parse(raw);if(arr&&arr.length){PROCESSES=normalizeProcesses(arr);return;}}
+  }catch(e){}
+  PROCESSES=DEFAULT_PROCESSES; // 未カスタムは共有(読み取り専用)
+}
+function saveProcesses(){try{localStorage.setItem(procKeyFor(currentProjectId),JSON.stringify(PROCESSES));}catch(e){}}
+function ensureEditableProcesses(){ if(PROCESSES===DEFAULT_PROCESSES)PROCESSES=_clone(DEFAULT_PROCESSES); }
 
 var currentProc=0,currentMethod=null,camTarget=null,compositeDataUrl=null,originalDataUrl=null,currentKanbanData=null,cameraStream=null;
 var measurementPoints=[{name:'1工区',state:null}];
@@ -1735,6 +1799,7 @@ function saveLS(){
 }
 function loadLS(){
   try{
+    loadProcesses(); // この工事の工程セット（未カスタムは標準）
     // 後方互換：旧キー(IDなし)→defaultプロジェクトへ移行
     var legacyMp=localStorage.getItem('dk_mp');
     if(legacyMp&&!localStorage.getItem('dk_mp_default')){
@@ -6945,6 +7010,127 @@ function cloudRefreshPanel(){
   else startPhotoSync();
 })();
 
+/* ===== 項目・工程のテンプレ編集（この工事のみ） ===== */
+var ieProc=0, _ieFlash=null;
+function getTemplates(){try{return JSON.parse(localStorage.getItem('dk_templates')||'[]');}catch(e){return [];}}
+function saveTemplates(a){localStorage.setItem('dk_templates',JSON.stringify(a));}
+function idbRewritePhotos(mut,cb){
+  if(!db){cb&&cb();return;}
+  var tx=db.transaction('photos','readwrite');var os=tx.objectStore('photos');
+  os.openCursor().onsuccess=function(e){var cur=e.target.result;if(cur){var v=cur.value;var del=mut(v);if(del===true)cur.delete();else cur.update(v);cur.continue();}};
+  tx.oncomplete=function(){cb&&cb();};tx.onerror=function(){cb&&cb();};
+}
+function reloadPhotos(cb){
+  measurementPoints.forEach(function(mp){if(mp.state)mp.state.forEach(function(pr){pr.forEach(function(it){it.photos=[];});});});
+  loadPhotosFromDB(function(){render();cb&&cb();});
+}
+// 工程p内の項目移動/削除に合わせて customSteps/stepOrder/workLocations のキー(p_i)を振り直す
+function _ieRemapMapsForProc(p,mapIdx){
+  [customSteps,stepOrder,workLocations].forEach(function(M){
+    if(!M)return;var moved={},del=[];
+    Object.keys(M).forEach(function(k){
+      var parts=k.split('_');if(parts.length!==2)return;
+      if(+parts[0]!==p)return;var oldI=+parts[1];del.push(k);
+      var ni=mapIdx(oldI);if(ni!=null)moved[p+'_'+ni]=M[k];
+    });
+    del.forEach(function(k){delete M[k];});
+    Object.keys(moved).forEach(function(k){M[k]=moved[k];});
+  });
+}
+// 工程削除に合わせてキーの工程番号を振り直す
+function _ieRemapMapsForProcDelete(delP){
+  [customSteps,stepOrder,workLocations].forEach(function(M){
+    if(!M)return;var res={};
+    Object.keys(M).forEach(function(k){
+      var parts=k.split('_');if(parts.length!==2){res[k]=M[k];return;}
+      var pp=+parts[0],ii=+parts[1];if(pp===delP)return;var np=pp>delP?pp-1:pp;res[np+'_'+ii]=M[k];
+    });
+    Object.keys(M).forEach(function(k){delete M[k];});
+    Object.keys(res).forEach(function(k){M[k]=res[k];});
+  });
+}
+function ieFlashRow(i,label){
+  var rows=document.querySelectorAll('#ie-body .ie-row');var row=rows[i];if(!row)return;
+  row.classList.add('ie-flash');var old=row.querySelector('.ie-chip');if(old)old.remove();
+  var c=document.createElement('span');c.className='ie-chip';c.textContent=label||'✓ 変更';row.appendChild(c);
+  try{row.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}
+  clearTimeout(row._ieT);row._ieT=setTimeout(function(){row.classList.remove('ie-flash');var cc=row.querySelector('.ie-chip');if(cc)cc.remove();},1900);
+}
+function openItemEdit(){ieProc=Math.max(0,Math.min(currentProc||0,PROCESSES.length-1));document.getElementById('item-edit-overlay').classList.add('on');document.body.style.overflow='hidden';renderItemEdit();}
+function closeItemEdit(){document.getElementById('item-edit-overlay').classList.remove('on');document.body.style.overflow='';renderMpBar();render();}
+function ieGoProc(i){ieProc=i;renderItemEdit();}
+function ieRenameItem(i,val){ensureEditableProcesses();val=(val||'').trim();PROCESSES[ieProc].items[i]=val;saveProcesses();var p=ieProc;idbRewritePhotos(function(v){if(v.procIndex===p&&v.itemIndex===i)v.itemName=val;return false;});ieFlashRow(i,'✓ 変更しました');showToast('項目名を変更しました');}
+function ieRenameProc(val){ensureEditableProcesses();val=(val||'').trim();PROCESSES[ieProc].title=val;PROCESSES[ieProc].shortName=val;saveProcesses();var p=ieProc;idbRewritePhotos(function(v){if(v.procIndex===p)v.procTitle=val;return false;});var t=document.querySelector('.ie-proc-title');if(t){t.classList.add('ie-flash');clearTimeout(t._ieT);t._ieT=setTimeout(function(){t.classList.remove('ie-flash');},1900);}showToast('工種名を変更しました');}
+function ieAddItem(){var n=prompt('追加する項目名');if(n===null)return;n=n.trim();if(!n)return;ensureEditableProcesses();var p=PROCESSES[ieProc];p.items.push(n);p.stars.push(false);if(!p.itemSteps)p.itemSteps=[];p.itemSteps.push((p.steps||['施工前','施工中','施工完了']).slice());measurementPoints.forEach(function(mp){mp.state[ieProc].push({checked:false,date:null,photos:[],dim:'',customName:null});});saveProcesses();saveLS();_ieFlash={proc:ieProc,idx:p.items.length-1,label:'✓ 追加しました'};renderItemEdit();render();showToast('項目を追加しました');}
+function ieDeleteItem(i){var p=ieProc;if(PROCESSES[p].items.length<=1){showToast('項目は1つ以上必要です');return;}if(!confirm('「'+getItemName(p,i)+'」を削除しますか？\nこの項目の写真も削除されます。'))return;ensureEditableProcesses();var pr=PROCESSES[p];pr.items.splice(i,1);pr.stars.splice(i,1);if(pr.itemSteps)pr.itemSteps.splice(i,1);if(pr.customIdx!=null&&pr.customIdx>=i)pr.customIdx=(pr.customIdx===i?null:pr.customIdx-1);measurementPoints.forEach(function(mp){mp.state[p].splice(i,1);});_ieRemapMapsForProc(p,function(oi){if(oi===i)return null;return oi>i?oi-1:oi;});saveProcesses();saveLS();idbRewritePhotos(function(v){if(v.procIndex!==p)return false;if(v.itemIndex===i)return true;if(v.itemIndex>i){v.itemIndex--;v.itemName=pr.items[v.itemIndex]||'';}return false;},function(){reloadPhotos(function(){renderItemEdit();showToast('項目を削除しました');});});}
+function ieMoveItem(i,dir){var p=ieProc,j=i+dir,pr=PROCESSES[p];if(j<0||j>=pr.items.length)return;ensureEditableProcesses();pr=PROCESSES[p];function sw(a){if(!a)return;var t=a[i];a[i]=a[j];a[j]=t;}sw(pr.items);sw(pr.stars);sw(pr.itemSteps);measurementPoints.forEach(function(mp){sw(mp.state[p]);});_ieRemapMapsForProc(p,function(oi){if(oi===i)return j;if(oi===j)return i;return oi;});saveProcesses();saveLS();_ieFlash={proc:p,idx:j,label:(dir<0?'▲ 上へ移動':'▼ 下へ移動')};idbRewritePhotos(function(v){if(v.procIndex!==p)return false;if(v.itemIndex===i){v.itemIndex=j;v.itemName=pr.items[j]||'';}else if(v.itemIndex===j){v.itemIndex=i;v.itemName=pr.items[i]||'';}return false;},function(){reloadPhotos(function(){renderItemEdit();});});}
+function ieAddProc(){var t=prompt('追加する工程(工種)名');if(t===null)return;t=t.trim();if(!t)return;ensureEditableProcesses();var steps=['施工前','施工中','施工完了'];PROCESSES.push({no:'工程'+_circled(PROCESSES.length+1),title:t,shortName:t,category:'',badge:'badge-p1',sub:'',mpLabel:'工区',steps:steps.slice(),items:['写真1'],stars:[false],itemSteps:[steps.slice()],footer:''});measurementPoints.forEach(function(mp){mp.state.push([{checked:false,date:null,photos:[],dim:'',customName:null}]);});ieProc=PROCESSES.length-1;saveProcesses();saveLS();renderItemEdit();render();showToast('工程を追加しました');}
+function ieDeleteProc(){if(PROCESSES.length<=1){showToast('工程は1つ以上必要です');return;}var p=ieProc;if(PROCESSES[p].custom){showToast('この工程は削除できません');return;}if(!confirm('工程「'+(PROCESSES[p].title||'')+'」を削除しますか？\nこの工程の写真も削除されます。'))return;ensureEditableProcesses();PROCESSES.splice(p,1);PROCESSES.forEach(function(pp,idx){pp.no='工程'+_circled(idx+1);});measurementPoints.forEach(function(mp){mp.state.splice(p,1);});_ieRemapMapsForProcDelete(p);if(currentProc>=PROCESSES.length)currentProc=PROCESSES.length-1;ieProc=Math.min(p,PROCESSES.length-1);saveProcesses();saveLS();idbRewritePhotos(function(v){if(v.procIndex===p)return true;if(v.procIndex>p){v.procIndex--;if(PROCESSES[v.procIndex]){v.procNo=PROCESSES[v.procIndex].no;v.procTitle=PROCESSES[v.procIndex].title;}}return false;},function(){reloadPhotos(function(){renderItemEdit();showToast('工程を削除しました');});});}
+function ieSaveTemplate(){var n=prompt('テンプレ名を入力');if(n===null)return;n=n.trim();if(!n)return;var t=getTemplates();t.push({name:n,procs:_clone(PROCESSES)});saveTemplates(t);showToast('テンプレ「'+n+'」を保存しました');}
+function applyTemplate(procs,label,mode){
+  mode=mode||'replace';
+  if(mode==='append'){
+    if(!confirm('「'+label+'」を今の工程に追加します（末尾に足します）。よろしいですか？'))return;
+    ensureEditableProcesses();
+    var add=normalizeProcesses(_clone(procs));
+    add.forEach(function(np){PROCESSES.push(np);measurementPoints.forEach(function(mp){mp.state.push(np.items.map(function(){return {checked:false,date:null,photos:[],dim:'',customName:null};}));});});
+    PROCESSES.forEach(function(pp,idx){pp.no='工程'+_circled(idx+1);});
+    ieProc=Math.max(0,PROCESSES.length-add.length);
+    saveProcesses();saveLS();render();renderMpBar();renderItemEdit();showToast('「'+label+'」を追加しました');
+    return;
+  }
+  if(!confirm('「'+label+'」の工程構成でこの工事を置き換えます。\n\n※撮影済みの写真はギャラリーに残りますが、一覧での表示位置がずれる場合があります。\n続けますか？'))return;
+  ensureEditableProcesses();PROCESSES=normalizeProcesses(_clone(procs));measurementPoints.forEach(function(mp){mp.state=initMpState();});customSteps={};stepOrder={};workLocations={};currentProc=0;ieProc=0;saveProcesses();saveLS();reloadPhotos(function(){renderMpBar();renderItemEdit();showToast('工程を置き換えました');});
+}
+function ieApplyTemplateMenu(){
+  var tpls=[{name:'標準（大規模修繕・全工種）',procs:DEFAULT_PROCESSES}];
+  getTemplates().forEach(function(t){tpls.push({name:t.name+'（保存済み）',procs:t.procs});});
+  var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:12000;display:flex;align-items:center;justify-content:center;padding:20px';
+  var BS='display:block;width:100%;text-align:left;background:#f4f7fb;border:1px solid #dde4ee;border-radius:10px;padding:12px;margin-bottom:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer';
+  var CB='width:100%;height:40px;border:none;background:none;color:#666;font-weight:700;font-family:inherit;cursor:pointer';
+  function box(h){return '<div style="background:#fff;border-radius:14px;padding:16px;max-width:360px;width:100%;max-height:80vh;overflow:auto">'+h+'</div>';}
+  function showList(){
+    var h='<div style="font-size:14px;font-weight:800;margin-bottom:10px">テンプレを選ぶ</div>';
+    tpls.forEach(function(t,i){h+='<button data-i="'+i+'" style="'+BS+'">'+escapeHtmlSimple(t.name)+'</button>';});
+    h+='<button data-cancel style="'+CB+'">キャンセル</button>';
+    ov.innerHTML=box(h);
+    ov.querySelectorAll('button[data-i]').forEach(function(bt){bt.onclick=function(){showMode(tpls[+bt.getAttribute('data-i')]);};});
+    ov.querySelector('[data-cancel]').onclick=function(){ov.remove();};
+  }
+  function showMode(t){
+    var h='<div style="font-size:14px;font-weight:800;margin-bottom:2px">'+escapeHtmlSimple(t.name)+'</div>'+
+      '<div style="font-size:11px;color:#667;margin-bottom:12px">どう反映しますか？</div>'+
+      '<button data-m="append" style="'+BS+'background:#eaf6ee;border-color:#bfe3cc">➕ 今の工程に追加（末尾に足す）<br><span style="font-size:10px;font-weight:400;color:#557">既存はそのまま。おすすめ</span></button>'+
+      '<button data-m="replace" style="'+BS+'">🔄 置き換える（全部入れ替え）<br><span style="font-size:10px;font-weight:400;color:#557">既存の工程構成をリセット</span></button>'+
+      '<button data-back style="'+CB+'">← 戻る</button>';
+    ov.innerHTML=box(h);
+    ov.querySelector('[data-m="append"]').onclick=function(){ov.remove();applyTemplate(t.procs,t.name,'append');};
+    ov.querySelector('[data-m="replace"]').onclick=function(){ov.remove();applyTemplate(t.procs,t.name,'replace');};
+    ov.querySelector('[data-back]').onclick=function(){showList();};
+  }
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+  document.body.appendChild(ov);showList();
+}
+function renderItemEdit(){
+  if(!document.getElementById('item-edit-overlay').classList.contains('on'))return;
+  if(ieProc>=PROCESSES.length)ieProc=PROCESSES.length-1;if(ieProc<0)ieProc=0;
+  var pb='';PROCESSES.forEach(function(p,i){pb+='<button class="'+(i===ieProc?'on':'')+'" onclick="ieGoProc('+i+')">'+(i+1)+'</button>';});
+  pb+='<button class="ie-addproc" onclick="ieAddProc()">＋工程</button>';
+  document.getElementById('ie-procbar').innerHTML=pb;
+  var proc=PROCESSES[ieProc];var h='';
+  h+='<div class="ie-proc-head"><input class="ie-proc-title" value="'+escapeHtmlSimple(proc.title||'')+'" onchange="ieRenameProc(this.value)" placeholder="工種名">'+(proc.custom?'':'<button class="ie-delproc" onclick="ieDeleteProc()">工程削除</button>')+'</div>';
+  if(proc.custom){
+    h+='<div class="ie-hint">この工程は「＋工事を追加」で管理する自由工事です。工事の追加・削除は台帳（一覧）画面側で行ってください。</div>';
+    document.getElementById('ie-body').innerHTML=h;return;
+  }
+  proc.items.forEach(function(it,i){
+    h+='<div class="ie-row"><input class="ie-item-input" value="'+escapeHtmlSimple(proc.items[i]||'')+'" onchange="ieRenameItem('+i+',this.value)"><button class="ie-mv" onclick="ieMoveItem('+i+',-1)">▲</button><button class="ie-mv" onclick="ieMoveItem('+i+',1)">▼</button><button class="ie-del" onclick="ieDeleteItem('+i+')">🗑</button></div>';
+  });
+  h+='<button class="ie-additem" onclick="ieAddItem()">＋ 項目を追加</button>';
+  document.getElementById('ie-body').innerHTML=h;
+  if(_ieFlash&&_ieFlash.proc===ieProc){ieFlashRow(_ieFlash.idx,_ieFlash.label);}
+  _ieFlash=null;
+}
 </script>
 </body>
 </html>
