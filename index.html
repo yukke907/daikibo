@@ -287,6 +287,8 @@ body{font-family:'Noto Sans JP','メイリオ',Meiryo,'Hiragino Kaku Gothic ProN
 .guide-arrow{text-align:center;font-size:16px;color:#aaa;padding:2px 0}
 .guide-btn{width:100%;height:52px;background:#0A1A38;border:none;color:#fff;font-size:16px;font-weight:900;border-radius:10px;cursor:pointer;font-family:inherit;margin-bottom:10px}
 .guide-again{text-align:center;font-size:11px;color:#aaa;cursor:pointer;text-decoration:underline}
+.nav-mode.lib{background:#F4A33A !important;border-color:#C97A1E !important}
+.nav-mode.lib .nav-label{color:#0A1A38}
 .nav-btn-labeled .nav-icon{font-size:14px;line-height:1}
 .nav-btn-labeled .nav-label{font-size:9px;font-weight:700;color:#0C204A;line-height:1;white-space:nowrap;letter-spacing:.02em}
 .footer-note{background:#dde4ee;border-top:3px solid #2D6FA8;padding:8px 12px;margin:0 10px 8px;border-radius:0 0 8px 8px;font-size:10px;color:#0C204A;line-height:1.5}
@@ -666,6 +668,27 @@ body.led-multimode .led-thumb-item{cursor:pointer}
 .ie-del{width:40px;height:40px;border:1px solid #f0c0c0;background:#fff;border-radius:8px;font-size:15px;flex-shrink:0;cursor:pointer}
 .ie-additem{width:100%;height:46px;border:1.5px dashed #9fb0c8;background:#fff;color:#0C204A;border-radius:10px;font-size:13px;font-weight:800;font-family:inherit;margin-top:8px;margin-bottom:20px;cursor:pointer}
 .ie-hint{font-size:11px;color:#66748a;background:#e2e9f2;border-radius:8px;padding:8px 10px;margin-bottom:12px;line-height:1.5}
+/* ===== PC（マウス操作の広い画面）向け：中央寄せ＆操作しやすく ===== */
+@media (min-width:900px){
+  body{background:#e9edf3}
+  .info-bar-inner{max-width:940px;margin:0 auto}
+  .mp-bar{padding-left:max(14px,calc(50% - 470px));padding-right:max(14px,calc(50% - 470px))}
+  #app{max-width:940px;margin:0 auto}
+  .bottom-nav{max-width:940px;margin:0 auto;border-left:1px solid #dde4ee;border-right:1px solid #dde4ee;border-radius:12px 12px 0 0}
+  .nav-btn-labeled:hover{background:#f2f6fc}
+  .nav-mode.lib:hover{background:#f0a83a !important}
+  /* 台帳（PDF作成）：ツールバー・サムネイルを大きく操作しやすく */
+  #ledger .led-top{padding:10px 18px}
+  .led-sort-btn{font-size:13px;padding:8px 13px;border-radius:7px}
+  .led-sort-btn:hover{background:rgba(255,255,255,.32)}
+  .led-print-btn{font-size:15px;padding:9px 18px;border-radius:8px}
+  .led-print-btn:hover{background:#e8952f}
+  .led-close{width:44px;height:44px;font-size:20px}
+  .led-thumb-list{padding:12px 14px;gap:10px}
+  .led-thumb-img{width:120px!important;height:84px!important}
+  .led-thumb-item{width:120px!important}
+  .led-content{padding-top:16px}
+}
 </style>
 </head>
 <body>
@@ -743,6 +766,7 @@ body.led-multimode .led-thumb-item{cursor:pointer}
   </div>
 </div>
 <input type="file" id="cam-input" accept="image/*" capture="environment">
+<input type="file" id="lib-input" accept="image/*" multiple style="display:none">
 <canvas id="comp-canvas" style="display:none"></canvas>
 <input type="file" id="led-replace-input" accept="image/*" style="display:none" onchange="ledReplaceFile(this)">
 <div id="loading"><div class="ld-spin"></div><div class="ld-txt">看板を合成中…</div></div>
@@ -1846,6 +1870,8 @@ function loadLS(){
 /* Camera */
 function openCam(pi,ii,stepIdx){
   camTarget={pi:pi,ii:ii,stepIdx:(typeof stepIdx==='number'?stepIdx:null),savedToGallery:false};
+  // アルバム選択モード：カメラの代わりに端末の写真アルバムから選ぶ（看板は同じ工程で合成）
+  if(window.shootMode==='lib'){var li=document.getElementById('lib-input');if(li){li.value='';li.click();return;}}
   updateCamMpDisplay();
   // チュートリアル通知
   if(typeof notifyTutorialAction==='function')setTimeout(function(){notifyTutorialAction('camera-opened');},200);
@@ -2478,6 +2504,71 @@ function _selectFallback(file){
     img.src=ev.target.result;
   };
   reader.readAsDataURL(file);
+}
+/* ===== アルバム取込（撮影⇄アルバム切替） ===== */
+// PC判定：マウス操作の広い画面。PCはカメラ撮影を使わないので常にアルバム(フォルダ)選択
+window.isDesktop=!!(window.matchMedia&&window.matchMedia('(hover:hover) and (pointer:fine)').matches&&window.innerWidth>=900);
+window.shootMode=window.isDesktop?'lib':((localStorage.getItem('dk_shoot_mode')==='lib')?'lib':'cam');
+function toggleShootMode(){setShootMode(window.shootMode==='lib'?'cam':'lib');}
+function setShootMode(m){
+  if(window.isDesktop){window.shootMode='lib';showToast('🖼️ PCではフォルダから写真を選んで取り込みます');render();return;}
+  window.shootMode=(m==='lib')?'lib':'cam';
+  localStorage.setItem('dk_shoot_mode',window.shootMode);
+  render();
+  if(window.shootMode==='lib'){
+    if(!localStorage.getItem('dk_seen_libmode')){localStorage.setItem('dk_seen_libmode','1');alert('🖼️ アルバム選択モードに切り替わりました。\n\n作業工程の「撮影」ボタンを押すと、端末の写真アルバムから写真を選んで看板を入れられます（複数選択でまとめて取り込み）。\n\n※もう一度押すと「📷 撮影」モードに戻ります（切り替えスイッチです）。');}
+    else showToast('🖼️ アルバム選択モード：工程を選ぶ→写真を選ぶ（複数可）');
+  } else {
+    if(!localStorage.getItem('dk_seen_cammode')){localStorage.setItem('dk_seen_cammode','1');alert('📷 撮影モードに切り替わりました。\n\n作業工程の「撮影」ボタンで、その場でカメラ撮影します（基本はこのモード）。');}
+    else showToast('📷 撮影モード：工程を選ぶ→カメラで撮影');
+  }
+}
+// アルバムから選択（1枚＝プレビュー経由／複数＝一括合成保存）
+document.getElementById('lib-input').addEventListener('change',function(e){
+  var files=Array.prototype.slice.call(e.target.files||[]);
+  if(!files.length||!camTarget)return;
+  if(files.length===1){
+    var f=files[0];document.getElementById('loading').className='on';
+    if(window.createImageBitmap){createImageBitmap(f,{imageOrientation:'from-image'}).then(function(bmp){processSelectedImage(bmp);}).catch(function(){_selectFallback(f);});}
+    else{_selectFallback(f);}
+    return;
+  }
+  _libBatchSave(files);
+});
+function _libComposite(src){
+  var sw=src.width||src.naturalWidth, sh=src.height||src.naturalHeight;
+  if(!sw||!sh)return null;
+  var MAX=1200;var canvas=document.getElementById('comp-canvas');var ctx=canvas.getContext('2d');var cw,ch;
+  if(sw>=sh){var sc=Math.min(1,MAX/Math.max(sw,sh));cw=Math.round(sw*sc);ch=Math.round(sh*sc);canvas.width=cw;canvas.height=ch;ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cw,ch);ctx.drawImage(src,0,0,cw,ch);}
+  else{var sc2=Math.min(1,MAX/Math.max(sw,sh));cw=Math.round(sh*sc2);ch=Math.round(sw*sc2);canvas.width=cw;canvas.height=ch;ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cw,ch);ctx.save();ctx.translate(0,ch);ctx.rotate(-Math.PI/2);ctx.drawImage(src,0,0,sw*sc2,sh*sc2);ctx.restore();}
+  var orig=canvas.toDataURL('image/jpeg',0.92);
+  var kanban=gatherKanbanData();
+  drawKanban(ctx,cw,ch);
+  var comp=canvas.toDataURL('image/jpeg',0.92);
+  return {orig:orig,comp:comp,kanban:kanban};
+}
+function _libBatchSave(files){
+  document.getElementById('loading').className='on';
+  var i=0,saved=0;
+  function next(){
+    if(i>=files.length){document.getElementById('loading').className='';saveLS();render();showToast(saved+'枚を取り込みました');return;}
+    var f=files[i++];
+    var done=function(src){
+      var r=null;try{r=_libComposite(src);}catch(e){r=null;}
+      if(!r){next();return;}
+      dbAdd(currentMP,camTarget.pi,camTarget.ii,r.comp,r.orig,r.kanban,function(id){
+        var st=getState();
+        if(st[camTarget.pi]&&st[camTarget.pi][camTarget.ii]){
+          st[camTarget.pi][camTarget.ii].photos.push({id:id||Date.now(),dataUrl:r.comp,originalUrl:r.orig,kanbanData:r.kanban});
+          if(!st[camTarget.pi][camTarget.ii].checked){st[camTarget.pi][camTarget.ii].checked=true;st[camTarget.pi][camTarget.ii].date=Date.now();}
+        }
+        saved++;next();
+      });
+    };
+    if(window.createImageBitmap){createImageBitmap(f,{imageOrientation:'from-image'}).then(done).catch(function(){var rd=new FileReader();rd.onload=function(ev){var im=new Image();im.onload=function(){done(im);};im.onerror=next;im.src=ev.target.result;};rd.readAsDataURL(f);});}
+    else{var rd=new FileReader();rd.onload=function(ev){var im=new Image();im.onload=function(){done(im);};im.onerror=next;im.src=ev.target.result;};rd.readAsDataURL(f);}
+  }
+  next();
 }
 function processSelectedImage(src){
   try{
@@ -3421,8 +3512,10 @@ function showLedger(){
       var contentW=content.clientWidth-16;
       var pageWidth=page.offsetWidth;
       var isPC=window.innerWidth>=900;
-      // PCは0.55倍でいきなり全体表示、スマホはcontentW幅に合わせる
-      var scale=isPC?0.55:(pageWidth>contentW?contentW/pageWidth:1);
+      // PCは2ページ並びを画面幅にフィット（読みやすさ優先）、スマホはcontentW幅に合わせる
+      var scale;
+      if(isPC){var twoColW=pageWidth*2+12;scale=Math.min(1,contentW/twoColW);if(scale<0.5)scale=0.5;}
+      else{scale=pageWidth>contentW?contentW/pageWidth:1;}
       _ledgerScale=scale;
       wrap.style.transform='scale('+scale+')';
       wrap.style.transformOrigin='top center';
@@ -5669,6 +5762,7 @@ function render(){
 
   var bottomNav='<div class="bottom-nav">'+
     '<button id="cloud-nav-btn" type="button" onclick="if(typeof cloudOpenPanel===\'function\')cloudOpenPanel()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1.5px solid #0C204A;background:#fff;border-radius:8px;cursor:pointer;padding:2px 8px;height:44px;min-width:42px;font-family:inherit"><span id="cloud-badge" style=\'font-size:14px;line-height:1\'>☁️</span><span id="cloud-badge-lbl" style=\'font-size:9px;font-weight:700;color:#0C204A;white-space:nowrap\'>同期</span></button>'+
+    '<button class="nav-btn-labeled nav-mode'+(window.shootMode==='lib'?' lib':'')+'" style="flex:1" onclick="toggleShootMode()"><span class="nav-icon">'+(window.shootMode==='lib'?'🖼️':'📷')+'</span><span class="nav-label">'+(window.shootMode==='lib'?'アルバム':'撮影')+'</span></button>'+
     '<button class="nav-btn-labeled" style="flex:1" onclick="showGallery()"><span class="nav-icon">🗂️</span><span class="nav-label">ギャラリー</span></button>'+
     '<button class="nav-btn-labeled nav-btn-ledger" style="flex:1" onclick="showLedger()"><span class="nav-icon">📋</span><span class="nav-label">写真台帳</span></button>'+
     '</div>';
