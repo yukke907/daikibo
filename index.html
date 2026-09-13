@@ -3709,10 +3709,11 @@ function renderLedger(){
   // 表紙
   var today=new Date();
   var todayStr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
-  var covDate=localStorage.getItem('dk_covdate')||todayStr;
-  var period=localStorage.getItem('dk_period1')||'';
-  var period2=localStorage.getItem('dk_period2')||'';
-  var client=localStorage.getItem('dk_client')||'';
+  // 工期・発注者・作成日は工事ごと(pKey)に保存。旧データ(グローバル)はフォールバック
+  var covDate=localStorage.getItem(pKey('dk_covdate'))||localStorage.getItem('dk_covdate')||todayStr;
+  var period=localStorage.getItem(pKey('dk_period1'))||localStorage.getItem('dk_period1')||'';
+  var period2=localStorage.getItem(pKey('dk_period2'))||localStorage.getItem('dk_period2')||'';
+  var client=localStorage.getItem(pKey('dk_client'))||localStorage.getItem('dk_client')||'';
   html+='<div class="led-cover">';
   html+='<div class="led-cover-title">施　工　写　真　台　帳</div>';
   html+='<div class="led-cover-gap"></div>';
@@ -3858,10 +3859,10 @@ function renderLedger(){
     var inp=document.getElementById(id);
     if(!inp)return;
     if(inp.tagName==='INPUT'){
-      inp.addEventListener('input',function(){localStorage.setItem(covMap[id],this.value);});
+      inp.addEventListener('input',function(){localStorage.setItem(pKey(covMap[id]),this.value);});
     } else {
       // contenteditable div の場合
-      inp.addEventListener('input',function(){localStorage.setItem(covMap[id],this.textContent);});
+      inp.addEventListener('input',function(){localStorage.setItem(pKey(covMap[id]),this.textContent);});
       // フォーカス時の枠表示
       inp.addEventListener('focus',function(){this.style.outline='1px dashed rgba(10,26,56,.3)';this.style.outlineOffset='2px';});
       inp.addEventListener('blur',function(){this.style.outline='none';});
@@ -5232,6 +5233,11 @@ function doImportAsNew(data,kojiName){
 function doImportMerge(data,kojiName){
   var targetId=currentProjectId;
   showToast('マージ中…');
+  // 工期・発注者・作成日は、現在の工事が未入力の場合のみ引き継ぐ（既存入力は上書きしない）
+  [['period1','dk_period1'],['period2','dk_period2'],['client','dk_client'],['covdate','dk_covdate']].forEach(function(m){
+    var val=data[m[0]];if(!val)return;var lsKey=m[1]+'_'+targetId;
+    if(!localStorage.getItem(lsKey))localStorage.setItem(lsKey,val);
+  });
   // 1. 進捗マージ：checkedがtrueの方を優先
   if(data.mp){
     try{
@@ -7131,6 +7137,20 @@ function renderItemEdit(){
   if(_ieFlash&&_ieFlash.proc===ieProc){ieFlashRow(_ieFlash.idx,_ieFlash.label);}
   _ieFlash=null;
 }
+
+/* 画面が定期的に暗く（自動スリープ）しないよう抑止：対応端末のみ・best-effort */
+(function(){
+  var wl=null;
+  function acquire(){
+    try{
+      if(document.hidden||!navigator.wakeLock||wl)return;
+      navigator.wakeLock.request('screen').then(function(s){wl=s;s.addEventListener('release',function(){wl=null;});}).catch(function(){});
+    }catch(e){}
+  }
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')acquire();});
+  window.addEventListener('focus',acquire);
+  acquire();
+})();
 </script>
 </body>
 </html>
